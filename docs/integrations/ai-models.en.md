@@ -10,6 +10,7 @@ The `boss ai` command group speaks an OpenAI-compatible protocol. This guide sum
 | `deepseek` | `https://api.deepseek.com/v1` | DeepSeek-V3 and DeepSeek-R1 |
 | `moonshot` | `https://api.moonshot.cn/v1` | Kimi K2 |
 | `openrouter` | `https://openrouter.ai/api/v1` | Aggregated access to Anthropic Claude, OpenAI, Google, Meta, and more |
+| `orcarouter` | `https://api.orcarouter.ai/v1` | OpenAI-compatible gateway; `orcarouter/auto` selects a model server-side per request |
 | `qwen` | `https://dashscope.aliyuncs.com/compatible-mode/v1` | Tongyi Qwen3 models |
 | `zhipu` | `https://open.bigmodel.cn/api/paas/v4` | GLM-4.6 and GLM-Z1 |
 | `siliconflow` | `https://api.siliconflow.cn/v1` | SiliconFlow aggregated inference |
@@ -80,6 +81,19 @@ boss ai config \
 
 > `deepseek-ai/deepseek-v4-pro` is a reasoning model with chain-of-thought — give it enough `max_tokens` (>= 512), otherwise tokens may be consumed by the reasoning trace and you get an empty `content` with `finish_reason=length`. The `--max-tokens` default in `boss ai config` is already 4096, so no extra tuning is needed.
 
+### OrcaRouter (OpenAI-compatible gateway)
+
+[OrcaRouter](https://www.orcarouter.ai) exposes an OpenAI-compatible API and uses a `provider/model` namespace. The special model id `orcarouter/auto` does not map to one fixed model on the endpoint — the server selects a model per request. The authoritative model list is whatever the server actually supports:
+
+```bash
+boss ai config \
+  --provider orcarouter \
+  --model orcarouter/auto \
+  --api-key <ORCAROUTER_KEY>
+```
+
+> Every `boss ai` prompt template ends with "return JSON only". Because `orcarouter/auto` may pick a different model per request, one that is less reliable at emitting structured JSON can cause intermittent `AI_PARSE_ERROR`s. If you hit `AI_PARSE_ERROR`, pin a specific model known to emit structured output reliably rather than relying on `auto`.
+
 ### Self-hosted proxy via LiteLLM / OneAPI
 
 ```bash
@@ -99,6 +113,7 @@ boss ai config \
 | You want mainland-China direct access without an extra proxy | `qwen`, `zhipu`, `deepseek`, or `moonshot` |
 | You want one key that spans many vendors | `openrouter` or `atlas` |
 | You want a full-modal, OpenAI-compatible aggregator | `atlas` + `deepseek-ai/deepseek-v4-pro` |
+| You want the server to pick the model per request | `orcarouter` + `orcarouter/auto` |
 | You already run your own compatible proxy | `custom` + `--base-url` |
 
 ## Validate the configuration

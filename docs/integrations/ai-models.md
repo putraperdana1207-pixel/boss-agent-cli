@@ -10,6 +10,7 @@
 | `deepseek` | `https://api.deepseek.com/v1` | DeepSeek-V3、DeepSeek-R1 |
 | `moonshot` | `https://api.moonshot.cn/v1` | Kimi K2 |
 | `openrouter` | `https://openrouter.ai/api/v1` | **聚合入口**，支持 Anthropic Claude、OpenAI、Google、Meta 等全家桶 |
+| `orcarouter` | `https://api.orcarouter.ai/v1` | OpenAI 兼容网关；`orcarouter/auto` 由服务端按请求选型 |
 | `qwen` | `https://dashscope.aliyuncs.com/compatible-mode/v1` | 通义千问 Qwen3 系列 |
 | `zhipu` | `https://open.bigmodel.cn/api/paas/v4` | 智谱 GLM-4.6 / GLM-Z1 |
 | `siliconflow` | `https://api.siliconflow.cn/v1` | 硅基流动聚合推理 |
@@ -80,6 +81,19 @@ boss ai config \
 
 > `deepseek-ai/deepseek-v4-pro` 是带思维链的推理模型，`max_tokens` 要给足（建议 ≥ 512），否则 token 可能先耗在思维链上，出现 `content` 为空且 `finish_reason=length`。`boss ai config` 的 `--max-tokens` 默认即为 4096，无需额外调整。
 
+### OrcaRouter（OpenAI 兼容网关）
+
+[OrcaRouter](https://www.orcarouter.ai) 提供 OpenAI 兼容 API，采用 `provider/model` 命名空间。特殊模型 id `orcarouter/auto` 不固定对应端点上某个具体模型，而是由服务端按请求选择。可用模型以服务端实际支持为准：
+
+```bash
+boss ai config \
+  --provider orcarouter \
+  --model orcarouter/auto \
+  --api-key <ORCAROUTER_KEY>
+```
+
+> 每条 `boss ai` 提示词模板都以「只返回 JSON，不要包含其他内容」结尾。`orcarouter/auto` 每次请求可能选中不同模型，若选到不擅长稳定输出结构化 JSON 的模型，会间歇性触发 `AI_PARSE_ERROR`。若遇到 `AI_PARSE_ERROR`，请固定一个已知能稳定输出结构化结果的模型，而不是依赖 `auto`。
+
 ### 自建代理（LiteLLM / OneAPI）
 
 ```bash
@@ -99,6 +113,7 @@ boss ai config \
 | 国内直连不走代理 | `qwen` / `zhipu` / `deepseek` / `moonshot` |
 | 需要混用多家模型 | `openrouter` 或 `atlas` 一个 key 全覆盖 |
 | 想要全模态 + OpenAI 兼容聚合入口 | `atlas` + `deepseek-ai/deepseek-v4-pro` |
+| 想要模型由服务端按请求自动选型 | `orcarouter` + `orcarouter/auto` |
 | 已有自建代理 | `custom` + `--base-url` |
 
 ## 配置校验
